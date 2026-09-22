@@ -71,8 +71,16 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Next's `basePath` does NOT rewrite fetch/tRPC URLs - it only rewrites
+ * next/link hrefs and next/image sources. Every other URL the client builds
+ * by hand (including the tRPC endpoint below) must add the prefix itself, or
+ * the request goes to the *host* root instead of the app and 404s behind the
+ * proxy (BASE_PATH=/direct/<agent>:<port>).
+ */
 function getBaseUrl() {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
+  const base = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+  if (typeof window !== "undefined") return window.location.origin + base;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}${base}`;
+  return `http://localhost:${process.env.PORT ?? 3000}${base}`;
 }
